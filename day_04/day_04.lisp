@@ -1,0 +1,23 @@
+(ql:quickload "split-sequence")
+(defmethod process-passphrase ((pass string))
+  (format t "-> ~a~%" pass)
+  (let* ((tokens (split-sequence:split-sequence-if #'(lambda (c) (char= c #\Space)) pass :remove-empty-subseqs t))
+         (unique-tokens (remove-duplicates tokens :test #'string=)))
+    (= (length tokens) (length unique-tokens))))
+(defmethod process-passphrase-anagram ((pass string))
+  (format t "-> ~a~%" pass)
+  (let* ((tokens (split-sequence:split-sequence-if #'(lambda (c) (char= c #\Space)) pass :remove-empty-subseqs t))
+         (unique-tokens (remove-duplicates tokens :test (lambda (x y) (string= (sort x #'char<) (sort y #'char<))))))
+    (= (length tokens) (length unique-tokens))))
+
+(let ((in (open "input.real.txt" :if-does-not-exist nil)))
+  (when in
+    (let* ((lines (loop for line = (read-line in nil) while line collect line))
+           (processed (map 'list #'process-passphrase lines))
+           (processed2 (map 'list #'process-passphrase-anagram lines)))
+      (format t "Processed: ~a~%" processed)
+      (format t "# passes: ~a~%# valid passes: ~a~%# valid anagram phrases: ~a~%" (length lines) (count t processed) (count t processed2)))
+    (close in)))
+
+(let ((test '("abcde fghij" "abcde xyz ecdab" "a ab abc abd abf abj" "iiii oiii ooii oooi oooo" "oiii ioii iioi iiio")))
+  (format t "~a~%" (map 'list #'process-passphrase-anagram test)))
